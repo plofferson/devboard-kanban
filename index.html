@@ -1,0 +1,56 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Hello DevBoard - Learning Tracker</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <header class="board-header">
+    <h1>Hello DevBoard - Learning Tracker</h1>
+    <button type="button" class="add-card-btn" aria-label="Add new card">Add Card</button>
+  </header>
+
+  <main class="board-container">
+    <section class="column" data-column="to-learn">
+      <h2 class="column-title">To Learn</h2>
+      <div class="column-cards" aria-label="Cards in To Learn"></div>
+    </section>
+
+    <section class="column" data-column="in-progress">
+      <h2 class="column-title">In Progress</h2>
+      <div class="column-cards" aria-label="Cards in In Progress"></div>
+    </section>
+
+    <section class="column" data-column="blocked">
+      <h2 class="column-title">Blocked</h2>
+      <div class="column-cards" aria-label="Cards in Blocked"></div>
+    </section>
+
+    <section class="column" data-column="completed">
+      <h2 class="column-title">Completed</h2>
+      <div class="column-cards" aria-label="Cards in Completed"></div>
+    </section>
+  </main>
+
+  <!-- Modal: Add new card -->
+  <div class="modal-overlay" id="modal-overlay" aria-hidden="true">
+    <div class="modal" role="dialog" aria-labelledby="modal-title" aria-modal="true">
+      <h2 class="modal-title" id="modal-title">Add New Card</h2>
+      <form class="modal-form" id="add-card-form">
+        <label for="card-title-input">Title</label>
+        <input type="text" id="card-title-input" name="title" required autocomplete="off" maxlength="200" placeholder="e.g. Learn React Hooks">
+        <label for="card-description-input">Description</label>
+        <textarea id="card-description-input" name="description" rows="3" maxlength="1000" placeholder="Optional notes..."></textarea>
+        <div class="modal-actions">
+          <button type="button" class="btn btn-secondary" id="modal-cancel">Cancel</button>
+          <button type="submit" class="btn btn-primary">Add Card</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <script src="script.js"></script>
+</body>
+</html>
