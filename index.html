@@ -37,7 +37,12 @@
   <!-- Modal: Add new card -->
   <div class="modal-overlay" id="modal-overlay" aria-hidden="true">
     <div class="modal" role="dialog" aria-labelledby="modal-title" aria-modal="true">
-      <h2 class="modal-title" id="modal-title">Add New Card</h2>
+      <div class="modal-header">
+        <h2 class="modal-title" id="modal-title">Add New Card</h2>
+        <div class="modal-header-actions hidden" id="modal-header-actions">
+          <button type="button" class="btn btn-danger btn-sm" id="modal-delete" aria-label="Delete card">Delete</button>
+        </div>
+      </div>
       <form class="modal-form" id="add-card-form">
         <label for="card-title-input">Title</label>
         <input type="text" id="card-title-input" name="title" required autocomplete="off" maxlength="200" placeholder="e.g. Learn React Hooks">
@@ -70,12 +75,18 @@
    </div>
   </div>
 
+        <label for="card-due-date-input">Due date</label>
+        <input type="date" id="card-due-date-input" name="dueDate">
 
         <label for="card-description-input">Description</label>
         <textarea id="card-description-input" name="description" rows="3" maxlength="1000" placeholder="Optional notes..."></textarea>
-        <div class="modal-actions">
+        <div class="modal-actions modal-actions-add" id="modal-actions-add">
           <button type="button" class="btn btn-secondary" id="modal-cancel">Cancel</button>
           <button type="submit" class="btn btn-primary">Add Card</button>
+        </div>
+        <div class="modal-actions modal-actions-edit hidden" id="modal-actions-edit">
+          <button type="button" class="btn btn-secondary" id="modal-cancel-edit">Cancel</button>
+          <button type="submit" class="btn btn-primary" id="modal-save">Save</button>
         </div>
       </form>
       <script>

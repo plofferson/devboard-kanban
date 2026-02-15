@@ -17,7 +17,7 @@
     { id: '3', title: 'Learn API Integration', description: 'REST and async patterns.', column: 'completed', tags: ['Back-End'] },
     {id: "4", title: "Deploy to GitHub Pages", description: "Make board accessible online", column: "completed", tags: ['DevOps']},
     {id: "10", title: "Week 2: API Integration", description: "Learn to fetch external data", column: "to-learn", tags: ['Back-End']},
-    {id: "6", title: "Feature - Card Tags", description: "Categorize cards with tags", column: "to-learn", tags: ['Front-End']},
+    {id: "6", title: "Feature - Card Tags", description: "Categorize cards with tags", column: "complete", tags: ['Front-End']},
     {id: "7", title: "Feature - due dates", description: "Insights when cards are due", column: "to-learn", tags: ['Front-End']},
     {id: "8", title: "Feature - Priority levels", description: "Prioritize cards based on importance", column: "to-learn", tags: ['Front-End']},
     {id: "9", title: "Feature - Search filter", description: "Search cards by title or description", column: "to-learn", tags: ['Front-End']},
@@ -26,12 +26,21 @@
   // --- State (in-memory list of cards) ---
   let cards = [];
 
+  /** When set, modal is in edit mode for this card id; when null, modal is in add mode */
+  let editingCardId = null;
+
   // --- DOM references (set in init) ---
   let modalOverlay;
   let addCardForm;
   let cardTitleInput;
   let cardDescriptionInput;
+  let cardDueDateInput;
   let modalCancelBtn;
+  let modalTitleEl;
+  let modalHeaderActions;
+  let modalActionsAdd;
+  let modalActionsEdit;
+  let modalDeleteBtn;
 
   /**
    * Generate a unique id for a new card.
@@ -79,8 +88,28 @@
   }
 
   /**
+   * Get human-readable due date label: "Due in X days", "Due today", "Overdue", "X days overdue".
+   * @param {string} dueDateStr - YYYY-MM-DD
+   * @returns {string}
+   */
+  function getDueDateLabel(dueDateStr) {
+    if (!dueDateStr || typeof dueDateStr !== 'string') return '';
+    const due = new Date(dueDateStr);
+    if (Number.isNaN(due.getTime())) return '';
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    due.setHours(0, 0, 0, 0);
+    const diffMs = due - today;
+    const diffDays = Math.round(diffMs / (1000 * 60 * 60 * 24));
+    if (diffDays > 0) return 'Due in ' + diffDays + ' day' + (diffDays === 1 ? '' : 's');
+    if (diffDays === 0) return 'Due today';
+    const abs = Math.abs(diffDays);
+    return abs === 1 ? '1 day overdue' : abs + ' days overdue';
+  }
+
+  /**
  * Build the DOM element for one card (title, tags, description, delete button, draggable).
- * @param {{id: string, title: string, description: string, column: string, tags?: string[]}} card
+ * @param {{id: string, title: string, description: string, column: string, tags?: string[], dueDate?: string}} card
  * @returns {HTMLElement}
  */
   function createCardElement(card) {
@@ -97,13 +126,14 @@
     titleEl.className = 'card-title';
     titleEl.textContent = card.title;
 
-    const deleteBtn = document.createElement('button');
-    deleteBtn.type = 'button';
-    deleteBtn.className = 'card-delete';
-    deleteBtn.setAttribute('aria-label', 'Delete card');
-    deleteBtn.textContent = 'Delete';
+    const editBtn = document.createElement('button');
+    editBtn.type = 'button';
+    editBtn.className = 'card-delete card-edit-btn';
+    editBtn.setAttribute('aria-label', 'Edit card');
+    editBtn.setAttribute('data-card-id', card.id);
+    editBtn.innerHTML = '<svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 15a3 3 0 1 0 0-6 3 3 0 0 0 0 6Z"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>';
 
-    header.append(titleEl, deleteBtn);
+    header.append(titleEl, editBtn);
 
     // Tags (between header and description)
     let tagsContainer = null;
@@ -124,9 +154,40 @@
     descEl.className = 'card-description';
     descEl.textContent = card.description || '';
 
+    // Show more / Show less toggle (only when description is long enough to clamp)
+    let descToggleEl = null;
+    const descText = (card.description || '').trim();
+    if (descText.length > 80) {
+      descToggleEl = document.createElement('button');
+      descToggleEl.type = 'button';
+      descToggleEl.className = 'card-description-toggle';
+      descToggleEl.setAttribute('aria-expanded', 'false');
+      descToggleEl.textContent = 'Show more';
+    }
+
+    // Due date indicator (below description)
+    let dueEl = null;
+    const dueDateStr = card.dueDate && String(card.dueDate).trim();
+    if (dueDateStr) {
+      const dueLabel = getDueDateLabel(dueDateStr);
+      if (dueLabel) {
+        dueEl = document.createElement('div');
+        dueEl.className = 'card-due-indicator';
+        dueEl.textContent = dueLabel;
+        dueEl.setAttribute('aria-label', 'Due: ' + dueLabel);
+        const due = new Date(dueDateStr);
+        const today = new Date();
+        today.setHours(0, 0, 0, 0);
+        due.setHours(0, 0, 0, 0);
+        if (due < today) el.classList.add('card-overdue');
+      }
+    }
+
     el.append(header);
     if (tagsContainer) el.append(tagsContainer);
     el.append(descEl);
+    if (descToggleEl) el.append(descToggleEl);
+    if (dueEl) el.append(dueEl);
 
     return el;
   }
@@ -154,29 +215,64 @@
   }
 
   /**
-   * Open the add-card modal and focus the title input.
+   * Open the add-card modal (empty form) and focus the title input.
    */
   function openModal() {
     if (!modalOverlay) return;
-    modalOverlay.classList.add('modal-open');
-    modalOverlay.setAttribute('aria-hidden', 'false');
+    editingCardId = null;
+    if (modalTitleEl) modalTitleEl.textContent = 'Add New Card';
+    if (modalHeaderActions) modalHeaderActions.classList.add('hidden');
+    if (modalActionsAdd) modalActionsAdd.classList.remove('hidden');
+    if (modalActionsEdit) modalActionsEdit.classList.add('hidden');
     addCardForm.reset();
     cardTitleInput.value = '';
     cardDescriptionInput.value = '';
+    if (cardDueDateInput) cardDueDateInput.value = '';
+    document.querySelectorAll('.tag-checkbox').forEach(cb => { cb.checked = false; });
+    updateTagCheckboxes();
+    modalOverlay.classList.add('modal-open');
+    modalOverlay.setAttribute('aria-hidden', 'false');
     setTimeout(() => cardTitleInput.focus(), 50);
   }
 
   /**
-   * Close the add-card modal.
+   * Open the modal in edit mode with form filled from the given card.
+   * @param {string} cardId
+   */
+  function openEditModal(cardId) {
+    const card = cards.find(c => c.id === cardId);
+    if (!card || !modalOverlay) return;
+    editingCardId = cardId;
+    if (modalTitleEl) modalTitleEl.textContent = 'Edit Card';
+    if (modalHeaderActions) modalHeaderActions.classList.remove('hidden');
+    if (modalActionsAdd) modalActionsAdd.classList.add('hidden');
+    if (modalActionsEdit) modalActionsEdit.classList.remove('hidden');
+    cardTitleInput.value = card.title || '';
+    cardDescriptionInput.value = card.description || '';
+    if (cardDueDateInput) cardDueDateInput.value = card.dueDate || '';
+    document.querySelectorAll('.tag-checkbox').forEach(cb => {
+      cb.checked = Array.isArray(card.tags) && card.tags.includes(cb.value);
+    });
+    updateTagCheckboxes();
+    modalOverlay.classList.add('modal-open');
+    modalOverlay.setAttribute('aria-hidden', 'false');
+    setTimeout(() => cardTitleInput.focus(), 50);
+  }
+
+  /**
+   * Close the modal and reset state.
    */
   function closeModal() {
     if (!modalOverlay) return;
     modalOverlay.classList.remove('modal-open');
     modalOverlay.setAttribute('aria-hidden', 'true');
-
-    // Reset tag checkboxes so modal opens fresh next time
+    editingCardId = null;
+    if (modalHeaderActions) modalHeaderActions.classList.add('hidden');
+    if (modalActionsAdd) modalActionsAdd.classList.remove('hidden');
+    if (modalActionsEdit) modalActionsEdit.classList.add('hidden');
     document.querySelectorAll('.tag-checkbox').forEach(cb => { cb.checked = false; });
     updateTagCheckboxes();
+    if (cardDueDateInput) cardDueDateInput.value = '';
   }
 
   /**
@@ -189,35 +285,43 @@
     if (!title) return;
 
     const description = (cardDescriptionInput.value || '').trim();
-
-    // 1. Get all checked tag checkboxes (name="tag" or class="tag-checkbox")
     const tagCheckboxes = Array.from(document.querySelectorAll('input[name="tags"], .tag-checkbox'));
     const checkedTags = tagCheckboxes.filter(cb => cb.checked);
-
-    // 2. Store selected tag values in a tags array
     const tags = checkedTags.map(cb => cb.value);
-
-    // 3. Validate max 2 tags selected - if more, show alert and return early
     if (tags.length > 2) {
       alert("You may select up to 2 tags only.");
       return;
     }
+    const dueDate = (cardDueDateInput && cardDueDateInput.value) ? cardDueDateInput.value.trim() : '';
 
-    // 4. Add tags array to the newCard object (empty array if none selected)
+    // Edit mode: update existing card
+    if (editingCardId) {
+      const card = cards.find(c => c.id === editingCardId);
+      if (card) {
+        card.title = title;
+        card.description = description;
+        card.tags = tags;
+        card.dueDate = dueDate || undefined;
+        saveToStorage();
+        renderBoard();
+      }
+      closeModal();
+      return;
+    }
+
+    // Add mode: create new card
     const newCard = {
       id: generateId(),
       title,
       description,
-      tags, // always an array (could be empty)
+      tags,
       column: 'to-learn',
+      dueDate: dueDate || undefined,
     };
     cards.push(newCard);
     saveToStorage();
     renderBoard();
     closeModal();
-
-    // 5. Tag checkbox reset/uncheck handled in closeModal (see custom rule)
-    // (If not: tagCheckboxes.forEach(cb => cb.checked = false);)
   }
 
 /**
@@ -259,6 +363,7 @@ function updateTagCheckboxes() {
    * @param {DragEvent} e
    */
   function handleDragStart(e) {
+    if (e.target.closest('.card-description-toggle')) return;
     const cardEl = e.target.closest('.card');
     if (!cardEl) return;
     const id = cardEl.getAttribute('data-card-id');
@@ -333,6 +438,16 @@ function updateTagCheckboxes() {
 
     if (addCardForm) addCardForm.addEventListener('submit', handleAddCardSubmit);
     if (modalCancelBtn) modalCancelBtn.addEventListener('click', closeModal);
+    const modalCancelEdit = document.getElementById('modal-cancel-edit');
+    if (modalCancelEdit) modalCancelEdit.addEventListener('click', closeModal);
+    if (modalDeleteBtn) {
+      modalDeleteBtn.addEventListener('click', () => {
+        if (editingCardId && confirm('Are you sure you want to delete this card? This cannot be undone.')) {
+          deleteCard(editingCardId);
+          closeModal();
+        }
+      });
+    }
 
     if (modalOverlay) {
       modalOverlay.addEventListener('click', (e) => {
@@ -347,16 +462,27 @@ function updateTagCheckboxes() {
       }
     });
 
-    // Delete: delegate from board container (cards are recreated on render)
+    // Edit card: gear button opens edit modal
     const board = document.querySelector('.board-container');
     if (board) {
       board.addEventListener('click', (e) => {
+        const toggleBtn = e.target.closest('.card-description-toggle');
+        if (toggleBtn) {
+          e.preventDefault();
+          const cardEl = toggleBtn.closest('.card');
+          if (cardEl) {
+            const expanded = cardEl.classList.toggle('card-description-expanded');
+            toggleBtn.setAttribute('aria-expanded', expanded);
+            toggleBtn.textContent = expanded ? 'Show less' : 'Show more';
+          }
+          return;
+        }
         const btn = e.target.closest('.card-delete');
         if (!btn) return;
-        const card = btn.closest('.card');
-        if (card) {
+        const cardId = btn.getAttribute('data-card-id') || (btn.closest('.card') && btn.closest('.card').getAttribute('data-card-id'));
+        if (cardId) {
           e.preventDefault();
-          deleteCard(card.getAttribute('data-card-id'));
+          openEditModal(cardId);
         }
       });
     }
@@ -387,7 +513,13 @@ function updateTagCheckboxes() {
     addCardForm = document.getElementById('add-card-form');
     cardTitleInput = document.getElementById('card-title-input');
     cardDescriptionInput = document.getElementById('card-description-input');
+    cardDueDateInput = document.getElementById('card-due-date-input');
     modalCancelBtn = document.getElementById('modal-cancel');
+    modalTitleEl = document.getElementById('modal-title');
+    modalHeaderActions = document.getElementById('modal-header-actions');
+    modalActionsAdd = document.getElementById('modal-actions-add');
+    modalActionsEdit = document.getElementById('modal-actions-edit');
+    modalDeleteBtn = document.getElementById('modal-delete');
 
     bindEvents();
     updateTagCheckboxes(); // set initial state (max 2 selected)
