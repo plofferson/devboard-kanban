@@ -409,3 +409,77 @@ body {
 .tag[data-tag="Integrations"] {
   background-color: #f59e0b; /* Orange */
 }
+
+/* ============================================
+   Tag Selection in Add Card Modal
+   ============================================ */
+
+   .tag-selection {
+    margin: 20px 0;
+  }
+  
+  .tag-label {
+    display: block;
+    font-weight: 600;
+    font-size: 0.95rem;
+    color: #1f2937;
+    margin-bottom: 6px;
+  }
+  
+  .tag-helper {
+    display: block;
+    font-size: 0.875rem;
+    color: #6b7280;
+    margin-bottom: 12px;
+  }
+  
+  .tag-options {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 10px;
+  }
+  
+  .tag-option {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 12px;
+    border: 1px solid #e5e7eb;
+    border-radius: 8px;
+    cursor: pointer;
+    background-color: #ffffff;
+    transition: background-color 0.2s ease, border-color 0.2s ease;
+  }
+
+  .tag-option:hover {
+    background-color: #f9fafb;
+    border-color: #d1d5db;
+  }
+
+  .tag-option:has(input:checked) {
+    background-color: #eff6ff;
+    border-color: #3b82f6;
+  }
+
+  .tag-option input[type="checkbox"] {
+    width: 18px;
+    height: 18px;
+    cursor: pointer;
+    accent-color: #3b82f6;
+    margin: 0;
+    flex-shrink: 0;
+  }
+
+  .tag-option span {
+    font-size: 0.95rem;
+    color: #374151;
+    user-select: none;
+    transition: font-weight 0.2s ease, color 0.2s ease;
+  }
+
+  .tag-option:has(input:checked) span {
+    font-weight: 700;
+    color: #1f2937;
+  }
+
+  

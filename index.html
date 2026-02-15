@@ -42,25 +42,34 @@
         <label for="card-title-input">Title</label>
         <input type="text" id="card-title-input" name="title" required autocomplete="off" maxlength="200" placeholder="e.g. Learn React Hooks">
 
-        <!-- Tag Selection Section -->
-        <div class="tag-section" style="margin: 1em 0;">
-          <label style="display:block; margin-bottom: 0.25em;">Tags</label>
-          <span style="display:block; font-size:0.92em; color:#5E6472; margin-bottom:0.6em;">Select up to 2 tags</span>
-          <div class="tag-checkboxes-grid" style="display:grid; grid-template-columns:1fr 1fr; gap: 0.5em 1em; margin-bottom: 0.5em;">
-            <label style="display:flex; align-items:center; gap:0.5em;">
-              <input type="checkbox" class="tag-checkbox" name="tags" value="Front-End"> Front-End
-            </label>
-            <label style="display:flex; align-items:center; gap:0.5em;">
-              <input type="checkbox" class="tag-checkbox" name="tags" value="Back-End"> Back-End
-            </label>
-            <label style="display:flex; align-items:center; gap:0.5em;">
-              <input type="checkbox" class="tag-checkbox" name="tags" value="DevOps"> DevOps
-            </label>
-            <label style="display:flex; align-items:center; gap:0.5em;">
-              <input type="checkbox" class="tag-checkbox" name="tags" value="Integrations"> Integrations
-            </label>
-          </div>
-        </div>
+  <!-- Tag Selection Section -->
+  <div class="tag-selection">
+    <label class="tag-label">Tags</label>
+    <span class="tag-helper">Select up to 2 tags</span>
+  
+  <div class="tag-options">
+    <label class="tag-option">
+      <input type="checkbox" class="tag-checkbox" name="tags" value="Front-End">
+      <span>Front-End</span>
+    </label>
+    
+    <label class="tag-option">
+      <input type="checkbox" class="tag-checkbox" name="tags" value="Back-End">
+      <span>Back-End</span>
+    </label>
+    
+    <label class="tag-option">
+      <input type="checkbox" class="tag-checkbox" name="tags" value="DevOps">
+      <span>DevOps</span>
+    </label>
+    
+    <label class="tag-option">
+      <input type="checkbox" class="tag-checkbox" name="tags" value="Integrations">
+      <span>Integrations</span>
+    </label>
+   </div>
+  </div>
+
 
         <label for="card-description-input">Description</label>
         <textarea id="card-description-input" name="description" rows="3" maxlength="1000" placeholder="Optional notes..."></textarea>

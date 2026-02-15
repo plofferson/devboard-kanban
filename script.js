@@ -13,14 +13,14 @@
   /** Default cards when no saved data exists */
   const DEFAULT_CARDS = [
     { id: '1', title: 'Setup Development Environment', description: 'Install IDE, Node, and tooling.', column: 'completed', tags: ['DevOps'] },
-    { id: '2', title: 'Build Kanban Board', description: 'Create this board with drag and drop.', column: 'completed', tags: ['Front-End'] },
-    { id: '3', title: 'Learn API Integration', description: 'REST and async patterns.', column: 'completed', tags: ['Back-End'] },
-    {id: "4", title: "Deploy to GitHub Pages", description: "Make board accessible online", column: "completed", tags: ['DevOps'] },
-    {id: "10", title: "Week 2: API Integration", description: "Learn to fetch external data", column: "to-learn", tags: ['Back-End'] },
-    {id: "6", title: "Feature - Card Tags", description: "Categorize cards with tags", column: "to-learn", tags: ['Front-End'] },
-    {id: "7", title: "Feature - due dates", description: "Insights when cards are due", column: "to-learn", tags: ['Front-End'] },
-    {id: "8", title: "Feature - Priority levels", description: "Prioritize cards based on importance", column: "to-learn", tags: ['Front-End'] },
-    {id: "9", title: "Feature - Search filter", description: "Search cards by title or description", column: "to-learn", tags: ['Front-End'] },
+    { id: '2', title: 'Build Kanban Board', description: 'Create this board with drag and drop.', column: 'completed' },
+    { id: '3', title: 'Learn API Integration', description: 'REST and async patterns.', column: 'completed' },
+    {id: "4", title: "Deploy to GitHub Pages", description: "Make board accessible online", column: "completed"},
+    {id: "10", title: "Week 2: API Integration", description: "Learn to fetch external data", column: "to-learn"},
+    {id: "6", title: "Feature - Card Tags", description: "Categorize cards with tags", column: "to-learn"},
+    {id: "7", title: "Feature - due dates", description: "Insights when cards are due", column: "to-learn"},
+    {id: "8", title: "Feature - Priority levels", description: "Prioritize cards based on importance", column: "to-learn"},
+    {id: "9", title: "Feature - Search filter", description: "Search cards by title or description", column: "to-learn"},
     ];
 
   // --- State (in-memory list of cards) ---
@@ -173,6 +173,10 @@
     if (!modalOverlay) return;
     modalOverlay.classList.remove('modal-open');
     modalOverlay.setAttribute('aria-hidden', 'true');
+
+    // Reset tag checkboxes so modal opens fresh next time
+    document.querySelectorAll('.tag-checkbox').forEach(cb => { cb.checked = false; });
+    updateTagCheckboxes();
   }
 
   /**
@@ -215,6 +219,30 @@
     // 5. Tag checkbox reset/uncheck handled in closeModal (see custom rule)
     // (If not: tagCheckboxes.forEach(cb => cb.checked = false);)
   }
+
+/**
+ * Update tag checkboxes: disable unchecked ones when 2 are selected.
+ */
+function updateTagCheckboxes() {
+  const checkboxes = document.querySelectorAll('.tag-checkbox');
+  const checked = Array.from(checkboxes).filter(cb => cb.checked);
+  
+  checkboxes.forEach(cb => {
+    const option = cb.closest('.tag-option');
+    
+    if (!cb.checked && checked.length >= 2) {
+      // Disable and fade unchecked boxes when 2 are selected
+      cb.disabled = true;
+      option.style.opacity = '0.5';
+      option.style.cursor = 'not-allowed';
+    } else {
+      // Enable all when less than 2 selected
+      cb.disabled = false;
+      option.style.opacity = '1';
+      option.style.cursor = 'pointer';
+    }
+  });
+}
 
   /**
    * Handle delete button click: remove card by id, save, render.
@@ -341,6 +369,11 @@
       board.addEventListener('dragleave', handleDragLeave);
       board.addEventListener('drop', handleDrop);
     }
+
+    // Tag checkboxes: limit selection to max 2
+    document.querySelectorAll('.tag-checkbox').forEach(cb => {
+      cb.addEventListener('change', updateTagCheckboxes);
+    });
   }
 
   /**
@@ -357,6 +390,7 @@
     modalCancelBtn = document.getElementById('modal-cancel');
 
     bindEvents();
+    updateTagCheckboxes(); // set initial state (max 2 selected)
     renderBoard();
   }
 
