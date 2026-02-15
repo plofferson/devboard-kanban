@@ -375,3 +375,37 @@ body {
 .btn-secondary:hover {
   background: var(--color-border);
 }
+
+/* Card Tags */
+.card-tags {
+  display: flex;
+  gap: 6px;
+  margin: 8px 0;
+  flex-wrap: wrap;
+}
+
+.tag {
+  display: inline-block;
+  padding: 4px 10px;
+  border-radius: 12px;
+  font-size: 0.75rem;
+  font-weight: 500;
+  color: white;
+  line-height: 1;
+}
+
+.tag[data-tag="Front-End"] {
+  background-color: #3b82f6; /* Blue */
+}
+
+.tag[data-tag="Back-End"] {
+  background-color: #10b981; /* Green */
+}
+
+.tag[data-tag="DevOps"] {
+  background-color: #8b5cf6; /* Purple */
+}
+
+.tag[data-tag="Integrations"] {
+  background-color: #f59e0b; /* Orange */
+}

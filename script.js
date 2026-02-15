@@ -12,12 +12,16 @@
 
   /** Default cards when no saved data exists */
   const DEFAULT_CARDS = [
-    { id: '1', title: 'Setup Development Environment', description: 'Install IDE, Node, and tooling.', column: 'completed' },
-    { id: '2', title: 'Build Kanban Board', description: 'Create this board with drag and drop.', column: 'completed' },
-    { id: '3', title: 'Learn API Integration', description: 'REST and async patterns.', column: 'completed' },
-    {id: "4", title: "Deploy to GitHub Pages", description: "Make board accessible online", column: "in-progress"},
-    {id: "5", title: "Week 2: API Integration", description: "Learn to fetch external data", column: "to-learn"},
-  ];
+    { id: '1', title: 'Setup Development Environment', description: 'Install IDE, Node, and tooling.', column: 'completed', tags: ['DevOps'] },
+    { id: '2', title: 'Build Kanban Board', description: 'Create this board with drag and drop.', column: 'completed', tags: ['Front-End'] },
+    { id: '3', title: 'Learn API Integration', description: 'REST and async patterns.', column: 'completed', tags: ['Back-End'] },
+    {id: "4", title: "Deploy to GitHub Pages", description: "Make board accessible online", column: "completed", tags: ['DevOps'] },
+    {id: "10", title: "Week 2: API Integration", description: "Learn to fetch external data", column: "to-learn", tags: ['Back-End'] },
+    {id: "6", title: "Feature - Card Tags", description: "Categorize cards with tags", column: "to-learn", tags: ['Front-End'] },
+    {id: "7", title: "Feature - due dates", description: "Insights when cards are due", column: "to-learn", tags: ['Front-End'] },
+    {id: "8", title: "Feature - Priority levels", description: "Prioritize cards based on importance", column: "to-learn", tags: ['Front-End'] },
+    {id: "9", title: "Feature - Search filter", description: "Search cards by title or description", column: "to-learn", tags: ['Front-End'] },
+    ];
 
   // --- State (in-memory list of cards) ---
   let cards = [];
@@ -75,16 +79,17 @@
   }
 
   /**
-   * Build the DOM element for one card (title, description, delete button, draggable).
-   * @param {{id: string, title: string, description: string, column: string}} card
-   * @returns {HTMLElement}
-   */
+ * Build the DOM element for one card (title, tags, description, delete button, draggable).
+ * @param {{id: string, title: string, description: string, column: string, tags?: string[]}} card
+ * @returns {HTMLElement}
+ */
   function createCardElement(card) {
     const el = document.createElement('div');
     el.className = 'card';
     el.setAttribute('data-card-id', card.id);
     el.draggable = true;
 
+    // Card header: title + delete button
     const header = document.createElement('div');
     header.className = 'card-header';
 
@@ -100,11 +105,28 @@
 
     header.append(titleEl, deleteBtn);
 
+    // Tags (between header and description)
+    let tagsContainer = null;
+    if (Array.isArray(card.tags) && card.tags.length > 0) {
+      tagsContainer = document.createElement('div');
+      tagsContainer.className = 'card-tags';
+      card.tags.forEach(tagName => {
+        const tagSpan = document.createElement('span');
+        tagSpan.className = 'tag';
+        tagSpan.textContent = tagName;
+        tagSpan.setAttribute('data-tag', tagName);
+        tagsContainer.appendChild(tagSpan);
+      });
+    }
+
+    // Description
     const descEl = document.createElement('p');
     descEl.className = 'card-description';
     descEl.textContent = card.description || '';
 
-    el.append(header, descEl);
+    el.append(header);
+    if (tagsContainer) el.append(tagsContainer);
+    el.append(descEl);
 
     return el;
   }
@@ -163,16 +185,35 @@
     if (!title) return;
 
     const description = (cardDescriptionInput.value || '').trim();
+
+    // 1. Get all checked tag checkboxes (name="tag" or class="tag-checkbox")
+    const tagCheckboxes = Array.from(document.querySelectorAll('input[name="tags"], .tag-checkbox'));
+    const checkedTags = tagCheckboxes.filter(cb => cb.checked);
+
+    // 2. Store selected tag values in a tags array
+    const tags = checkedTags.map(cb => cb.value);
+
+    // 3. Validate max 2 tags selected - if more, show alert and return early
+    if (tags.length > 2) {
+      alert("You may select up to 2 tags only.");
+      return;
+    }
+
+    // 4. Add tags array to the newCard object (empty array if none selected)
     const newCard = {
       id: generateId(),
       title,
       description,
+      tags, // always an array (could be empty)
       column: 'to-learn',
     };
     cards.push(newCard);
     saveToStorage();
     renderBoard();
     closeModal();
+
+    // 5. Tag checkbox reset/uncheck handled in closeModal (see custom rule)
+    // (If not: tagCheckboxes.forEach(cb => cb.checked = false);)
   }
 
   /**

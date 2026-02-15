@@ -3,12 +3,12 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Hello DevBoard - Learning Tracker</title>
+  <title>DevBoard - Learning Tracker</title>
   <link rel="stylesheet" href="style.css">
 </head>
 <body>
   <header class="board-header">
-    <h1>Hello DevBoard - Learning Tracker</h1>
+    <h1>DevBoard - Learning Tracker</h1>
     <button type="button" class="add-card-btn" aria-label="Add new card">Add Card</button>
   </header>
 
@@ -41,6 +41,27 @@
       <form class="modal-form" id="add-card-form">
         <label for="card-title-input">Title</label>
         <input type="text" id="card-title-input" name="title" required autocomplete="off" maxlength="200" placeholder="e.g. Learn React Hooks">
+
+        <!-- Tag Selection Section -->
+        <div class="tag-section" style="margin: 1em 0;">
+          <label style="display:block; margin-bottom: 0.25em;">Tags</label>
+          <span style="display:block; font-size:0.92em; color:#5E6472; margin-bottom:0.6em;">Select up to 2 tags</span>
+          <div class="tag-checkboxes-grid" style="display:grid; grid-template-columns:1fr 1fr; gap: 0.5em 1em; margin-bottom: 0.5em;">
+            <label style="display:flex; align-items:center; gap:0.5em;">
+              <input type="checkbox" class="tag-checkbox" name="tags" value="Front-End"> Front-End
+            </label>
+            <label style="display:flex; align-items:center; gap:0.5em;">
+              <input type="checkbox" class="tag-checkbox" name="tags" value="Back-End"> Back-End
+            </label>
+            <label style="display:flex; align-items:center; gap:0.5em;">
+              <input type="checkbox" class="tag-checkbox" name="tags" value="DevOps"> DevOps
+            </label>
+            <label style="display:flex; align-items:center; gap:0.5em;">
+              <input type="checkbox" class="tag-checkbox" name="tags" value="Integrations"> Integrations
+            </label>
+          </div>
+        </div>
+
         <label for="card-description-input">Description</label>
         <textarea id="card-description-input" name="description" rows="3" maxlength="1000" placeholder="Optional notes..."></textarea>
         <div class="modal-actions">
@@ -48,6 +69,23 @@
           <button type="submit" class="btn btn-primary">Add Card</button>
         </div>
       </form>
+      <script>
+        // Tag selection logic: max 2 checkboxes
+        (function() {
+          const tagCheckboxes = document.querySelectorAll('.tag-checkbox');
+          function limitTagSelections() {
+            const checked = Array.from(tagCheckboxes).filter(cb => cb.checked);
+            if (checked.length >= 2) {
+              tagCheckboxes.forEach(cb => {
+                if (!cb.checked) cb.disabled = true;
+              });
+            } else {
+              tagCheckboxes.forEach(cb => cb.disabled = false);
+            }
+          }
+          tagCheckboxes.forEach(cb => cb.addEventListener('change', limitTagSelections));
+        })();
+      </script>
     </div>
   </div>
 
